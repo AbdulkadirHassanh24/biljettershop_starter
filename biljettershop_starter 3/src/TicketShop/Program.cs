@@ -28,12 +28,23 @@ while (true)
     else if (cmd == "2")
     {
         Console.Write("Köparens e-post: ");
-        var email = Console.ReadLine() ?? "anon@example.com";
+        var email = Console.ReadLine();
+
+        if (!IsValidEmail(email))
+        {
+            Console.WriteLine("Fel: Ogiltig e-postadress.");
+            continue;
+        }
+
         Console.Write("Ange seatIds separerade med mellanslag (ex: A-1 A-2): ");
-        var ids = (Console.ReadLine() ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var ids = (Console.ReadLine() ?? "")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(id => id.ToUpperInvariant())
+            .ToArray();
+
         try
         {
-            var result = resService.HoldSeats(evt, email, ids);
+            var result = resService.HoldSeats(evt, email!, ids);
             Console.WriteLine($"Reserverade {result.Seats.Count} platser för {email}. ReservationId: {result.ReservationId}. Giltig t.o.m. {result.ExpiresAt:HH:mm:ss}.");
             Console.WriteLine($"Belopp: {result.TotalAmount:C}");
         }
@@ -72,3 +83,16 @@ while (true)
     }
     else if (cmd == "6") break;
 }
+static bool IsValidEmail(string? email)
+{
+    if (string.IsNullOrWhiteSpace(email))
+        return false;
+
+    var atIndex = email.IndexOf('@');
+    var dotIndex = email.LastIndexOf('.');
+
+    return atIndex > 0 &&
+           dotIndex > atIndex + 1 &&
+           dotIndex < email.Length - 1;
+}
+
